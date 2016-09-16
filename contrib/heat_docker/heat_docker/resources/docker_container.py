@@ -400,28 +400,7 @@ class DockerContainer(resource.Resource):
             return logs.split('\n').pop()
 
     def handle_create(self):
-        create_args = {
-            'image': self.properties[self.IMAGE],
-            'command': self.properties[self.CMD],
-            'hostname': self.properties[self.HOSTNAME],
-            'user': self.properties[self.USER],
-            'stdin_open': self.properties[self.OPEN_STDIN],
-            'tty': self.properties[self.TTY],
-            'mem_limit': self.properties[self.MEMORY],
-            'ports': self.properties[self.PORT_SPECS],
-            'environment': self.properties[self.ENV],
-            'dns': self.properties[self.DNS],
-            'volumes': self.properties[self.VOLUMES],
-            'name': self.properties[self.NAME],
-            'cpu_shares': self.properties[self.CPU_SHARES],
-            'cpuset': self.properties[self.CPU_SET]
-        }
-        client = self.get_client()
-        client.pull(self.properties[self.IMAGE])
-        result = client.create_container(**create_args)
-        container_id = result['Id']
-        self.resource_id_set(container_id)
-
+    
         start_args = {}
 
         if self.properties[self.PRIVILEGED]:
@@ -446,8 +425,32 @@ class DockerContainer(resource.Resource):
                 not self.properties[self.PRIVILEGED]):
             start_args['devices'] = self._get_mapping_devices(
                 self.properties[self.DEVICES])
+                    
+        create_args = {
+            'image': self.properties[self.IMAGE],
+            'command': self.properties[self.CMD],
+            'hostname': self.properties[self.HOSTNAME],
+            'user': self.properties[self.USER],
+            'stdin_open': self.properties[self.OPEN_STDIN],
+            'tty': self.properties[self.TTY],
+            'mem_limit': self.properties[self.MEMORY],
+            'ports': self.properties[self.PORT_SPECS],
+            'environment': self.properties[self.ENV],
+            'dns': self.properties[self.DNS],
+            'volumes': self.properties[self.VOLUMES],
+            'name': self.properties[self.NAME],
+            'cpu_shares': self.properties[self.CPU_SHARES],
+            'cpuset': self.properties[self.CPU_SET],
+            'host_config': start_args
+        }
+        client = self.get_client()
+        client.pull(self.properties[self.IMAGE])
+        result = client.create_container(**create_args)
+        container_id = result['Id']
+        self.resource_id_set(container_id)
 
-        client.start(container_id, **start_args)
+
+        client.start(container_id)
         return container_id
 
     def _get_mapping_devices(self, devices):
